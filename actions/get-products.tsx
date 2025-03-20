@@ -8,31 +8,50 @@ interface Query {
     categoryId?: string;
     colorId?: string;
     sizeId?: string;
-    isFeatured?: boolean
+    isFeatured?: boolean;
 }
 
-const getProduct = async (query: Query): Promise<Product[]> => {
-    const url = qs.stringifyUrl({
-        url: URL,
-        query: {
-            categoryId: query.categoryId,
-            colorId: query.colorId,
-            sizeId: query.sizeId,
-            isFeatured: query.isFeatured,
-        },
-    });
+const getProducts = async (query: Query): Promise<Product[]> => {
+    try {
+        // Construct the URL with query parameters
+        const url = qs.stringifyUrl({
+            url: URL,
+            query: {
+                categoryId: query.categoryId || undefined,
+                colorId: query.colorId,
+                sizeId: query.sizeId,
+                isFeatured: query.isFeatured,
+            },
+        });
 
-    const res = await fetch(url);
-    const data = await res.json();
+        const res = await fetch(url);
 
+        if (!res.ok) {
+            console.error("Failed to fetch products:", res.status, res.statusText);
+            throw new Error("Failed to fetch products");
+        }
 
-    const processedData = data.map((product: any) => ({
-        ...product,
-        images: product.image?.map((img: any) => img.url) || [], 
-    }));
+        const data = await res.json();
 
+        if (!Array.isArray(data)) {
+            console.error("Invalid response format:", data);
+            throw new Error("Invalid response format");
+        }
 
-    return processedData;
+        const processedData = data.map((product: any) => ({
+            ...product,
+            images: product.image?.map((img: any) => ({ url: img.url })) || [],
+        }));
+
+        if (query.categoryId) {
+            return processedData.filter((product) => product.category?.id === query.categoryId);
+        }
+
+        return processedData;
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return [];
+    }
 };
 
-export default getProduct;
+export default getProducts;
