@@ -52,6 +52,7 @@ const CategoryPage = async ({ params, searchParams }: CategoryPageProps) => {
                                 name="Sizes"
                                 data={sizes}
                             />
+                            <hr className="my-4"/>
                             <Filter
                                 valueKey="colorId"
                                 name="Colors"
