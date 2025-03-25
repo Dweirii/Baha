@@ -10,16 +10,17 @@ import type { MouseEventHandler } from "react"
 import Button from "@/components/ui/Button"
 import usePreviewModal from "@/hooks/use-preview-modal"
 import Currency from "@/components/ui/currency"
+import useCart from "@/hooks/use-cart"
 
 interface ProductCardProps {
   data: Product
-  onAddToCart?: (product: Product) => void
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ data, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ data }) => {
   const imageUrl = data.images?.[0]?.url || "/placeholder.jpg"
   const router = useRouter()
   const previewModal = usePreviewModal()
+  const cart = useCart();
 
   const handleClick = () => {
     router.push(`/products/${data.id}`)
@@ -32,9 +33,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ data, onAddToCart }) => {
 
   const handleAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.stopPropagation()
-    if (onAddToCart) {
-      onAddToCart(data)
-    }
+
+    cart.addItem(data);
   }
 
   return (
