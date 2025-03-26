@@ -1,13 +1,23 @@
+"use client";
+
 import { Product } from "@/types";
 import Currency from "./ui/currency";
 import Button from "./ui/Button";
 import { ShoppingCart } from 'lucide-react';
+import { MouseEventHandler } from "react";
+import useCart from "@/hooks/use-cart";
 
 interface InfoProps {
   data: Product;
 }
 
 const Info: React.FC<InfoProps> = ({ data }) => {
+  const cart = useCart();  
+  const handleAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
+      event.stopPropagation()
+      cart.addItem(data);
+    }
+  
   return (
     <div className="space-y-6">
       {/* Product Name */}
@@ -52,7 +62,9 @@ const Info: React.FC<InfoProps> = ({ data }) => {
 
       {/* Add to Cart Button */}
       <div className="pt-4">
-        <Button className="w-full sm:w-auto flex items-center justify-center gap-x-2 bg-black text-white py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors">
+        <Button
+          onClick={handleAddToCart} 
+          className="w-full sm:w-auto flex items-center justify-center gap-x-2 bg-black text-white py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors">
           Add To Cart
           <ShoppingCart className="w-5 h-5"/>
         </Button>

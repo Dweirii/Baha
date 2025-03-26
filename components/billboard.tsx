@@ -32,8 +32,6 @@ const Billboard: React.FC<BillboardProps> = ({
             <h2 className="font-bold text-3xl sm:text-5xl lg:text-6xl max-w-xs sm:max-w-xl text-Black drop-shadow-md">
               {data?.label || ""}
             </h2>
-            
-
           </div>
         </div>
       </div>

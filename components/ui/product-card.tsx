@@ -33,7 +33,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ data }) => {
 
   const handleAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.stopPropagation()
-
     cart.addItem(data);
   }
 

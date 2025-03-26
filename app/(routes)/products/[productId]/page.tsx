@@ -1,3 +1,5 @@
+// /app/product/[productId]/page.tsx
+
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -7,54 +9,58 @@ import Container from "@/components/ui/container";
 import ProductList from "@/components/product-list";
 import Gallery from "@/components/gallery";
 import Info from "@/components/info";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     productId: string;
-  };
+  }>;
 }
 
-// Generate metadata for the product page
+// ✅ Generate metadata for the product page
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   try {
-    const product = await getProduct(params.productId);
     
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { productId } = await params;
+    const product = await getProduct((await params).productId);
+
     if (!product) {
       return {
-        title: 'Product Not Found',
-        description: 'The requested product could not be found'
+        title: "Product Not Found",
+        description: "The requested product could not be found",
       };
     }
-    
+
     return {
       title: `${product.name} | Store`,
       openGraph: {
         images: product.images?.[0]?.url ? [{ url: product.images[0].url }] : [],
       },
     };
-  } catch (error) {
+  } catch {
     return {
-      title: 'Product Details',
-      description: 'View product details'
+      title: "Product Details",
+      description: "View product details",
     };
   }
 }
 
-const ProductPage: React.FC<ProductPageProps> = async ({ params }) => {
+// ✅ Page component
+const ProductPage = async ({ params }: ProductPageProps) => {
   try {
-    const product = await getProduct(params.productId);
-    
+
+    const product = await getProduct((await params).productId);
+
     if (!product) {
       notFound();
     }
-    
+
     const suggestedProducts = await getProducts({
       categoryId: product?.category?.id,
     });
-    
+
     return (
       <div className="bg-white">
         <Container>
@@ -73,9 +79,9 @@ const ProductPage: React.FC<ProductPageProps> = async ({ params }) => {
                 <Info data={product} />
               </div>
             </div>
-            
+
             <hr className="my-10" />
-            
+
             <section aria-labelledby="related-products-heading">
               <h2 id="related-products-heading" className="sr-only">Related products</h2>
               {suggestedProducts.length > 0 ? (

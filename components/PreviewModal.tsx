@@ -15,16 +15,18 @@ const PreviewModal = () => {
 
   return (
     <Modal open={previewModal.isOpen} onClose={previewModal.onClose}>
+      <div className="flex flex-col w-full gap-6 md:gap-10">
+        {/* Mobile view - stacked layout */}
+        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-12 md:gap-8">
+          {/* GALLERY COLUMN - full width on mobile, proportional on larger screens */}
+          <div className="col-span-1 md:col-span-5 lg:col-span-5">
+            <Gallery images={product.images} />
+          </div>
 
-      <div className="grid w-full grid-cols-4 items-start gap-x-8 gap-y-10 sm:grid-cols-12 lg:gap-x-10">
-        {/* GALLERY COLUMN */}
-        <div className="sm:col-span-2 lg:col-span-5 ">
-          <Gallery images={product.images} />
-        </div>
-
-        {/* INFO COLUMN */}
-        <div className="sm:col-span-4 lg:col-span-7 mt-3">
-          <Info data={product} />
+          {/* INFO COLUMN - full width on mobile, proportional on larger screens */}
+          <div className="col-span-1 md:col-span-7 lg:col-span-7">
+            <Info data={product} />
+          </div>
         </div>
       </div>
     </Modal>
