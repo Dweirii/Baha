@@ -1,8 +1,6 @@
 // /app/product/[productId]/page.tsx
 
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 import getProducts from "@/actions/get-products";
 import getProduct from "@/actions/get-product";
 import Container from "@/components/ui/container";
@@ -52,11 +50,6 @@ const ProductPage = async ({ params }: ProductPageProps) => {
   try {
 
     const product = await getProduct((await params).productId);
-
-    if (!product) {
-      notFound();
-    }
-
     const suggestedProducts = await getProducts({
       categoryId: product?.category?.id,
     });
