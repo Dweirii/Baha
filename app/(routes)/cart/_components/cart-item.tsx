@@ -6,7 +6,6 @@ import Image from "next/image"
 import { X } from "lucide-react"
 import { useState } from "react"
 import { motion } from "framer-motion"
-
 import IconButton from "@/components/ui/icon-button"
 import Currency from "@/components/ui/currency"
 import useCart from "@/hooks/use-cart"
