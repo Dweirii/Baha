@@ -4,11 +4,10 @@ import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Check, Clock, AlertTriangle, Download } from "lucide-react"
+import { Check, Package } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
 
 import Button from "@/components/ui/Button"
-import { DownloadButton } from "@/components/ui/download-button"
-import { useApiRequest } from "@/hooks/use-api-request"
 
 interface OrderItem {
   id: string
@@ -20,19 +19,26 @@ interface OrderItem {
 export default function ThankYouPage() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
-  const [timeLeft, setTimeLeft] = useState(30 * 60) // 30 minutes in seconds
   const searchParams = useSearchParams()
-  const sessionId = searchParams.get("session_id")
-
-  const { apiRequest } = useApiRequest()
+  const orderId = searchParams.get("order_id")
+  const storeId = searchParams.get("store_id")
+  const { getToken } = useAuth()
 
   useEffect(() => {
     async function fetchOrderData() {
-      if (!sessionId) return
+      if (!orderId || !storeId) return
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+      if (!apiUrl) return
       try {
-        const data = await apiRequest(
-          `/api/b32608ef-bb5e-4ad4-8ac1-2053d15102a8/checkout/session?session_id=${sessionId}`,
-        )
+        const token = await getToken()
+        const base = apiUrl.replace(/\/?$/, "")
+        const ordersPath = base.endsWith(storeId) ? `orders/${orderId}` : `${storeId}/orders/${orderId}`
+        const url = `${base}/${ordersPath}`
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
         setOrderItems(data.orderItems || [])
       } catch (error) {
         console.error("Failed to load order items", error)
@@ -41,68 +47,31 @@ export default function ThankYouPage() {
 
     fetchOrderData()
 
-    // Auto-trigger confetti after component mounts
     const timer = setTimeout(() => setShowConfetti(true), 500)
     return () => clearTimeout(timer)
-  }, [sessionId, apiRequest])
-
-  // Countdown timer effect
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prevTime - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
+  }, [orderId, storeId, getToken])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("cart");
+      localStorage.removeItem("cart")
     }
-  }, []);
-
-  // Format time display
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
-
-  // Determine urgency level
-  const getUrgencyLevel = () => {
-    if (timeLeft <= 300) return "critical" // Last 5 minutes
-    if (timeLeft <= 600) return "warning" // Last 10 minutes
-    return "normal"
-  }
-
-  const urgencyLevel = getUrgencyLevel()
+  }, [])
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden relative bg-white dark:bg-black">
-      {/* Monochrome Background Pattern */}
+      {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,black_1px,transparent_1px)] bg-[length:20px_20px]" />
       </div>
 
-      {/* Monochrome Confetti Animation */}
+      {/* Confetti */}
       {showConfetti && (
         <>
           {[...Array(30)].map((_, i) => (
             <motion.div
               key={i}
               className="fixed w-3 h-3 rounded-full bg-black dark:bg-white"
-              initial={{
-                top: "-10%",
-                left: `${Math.random() * 100}%`,
-                opacity: 1,
-                scale: 0,
-              }}
+              initial={{ top: "-10%", left: `${Math.random() * 100}%`, opacity: 1, scale: 0 }}
               animate={{
                 top: "110%",
                 opacity: 0,
@@ -122,12 +91,7 @@ export default function ThankYouPage() {
             <motion.div
               key={i + 30}
               className="fixed w-2 h-8 bg-gray-600 dark:bg-gray-400"
-              initial={{
-                top: "-10%",
-                left: `${Math.random() * 100}%`,
-                opacity: 1,
-                rotate: 0,
-              }}
+              initial={{ top: "-10%", left: `${Math.random() * 100}%`, opacity: 1, rotate: 0 }}
               animate={{
                 top: "110%",
                 opacity: 0,
@@ -146,7 +110,7 @@ export default function ThankYouPage() {
       )}
 
       <div className="max-w-2xl w-full flex flex-col items-center text-center z-10 relative">
-        {/* Success Icon */}
+        {/* Success icon */}
         <motion.div
           className="relative mb-8"
           initial={{ scale: 0, rotate: -180 }}
@@ -162,21 +126,15 @@ export default function ThankYouPage() {
               <Check className="h-12 w-12 text-white" strokeWidth={3} />
             </motion.div>
           </div>
-
-          {/* Pulsing ring effect */}
           <motion.div
             className="absolute inset-0 rounded-full border-4 border-green-500"
             initial={{ scale: 1, opacity: 0.8 }}
             animate={{ scale: 1.5, opacity: 0 }}
-            transition={{
-              duration: 2,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "loop",
-            }}
+            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatType: "loop" }}
           />
         </motion.div>
 
-        {/* Header Text */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -192,177 +150,82 @@ export default function ThankYouPage() {
             Thank You!
           </motion.h1>
           <motion.p
-            className="text-xl text-gray-600 dark:text-gray-400 mb-4"
+            className="text-xl text-gray-600 dark:text-gray-400 mb-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
           >
-            Your order has been received successfully
+            Your order has been received successfully.
+          </motion.p>
+          <motion.p
+            className="text-base text-gray-500 dark:text-gray-500"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4 }}
+          >
+            We will prepare your items for shipping. You will receive an order confirmation by email.
           </motion.p>
         </motion.div>
 
-        {/* Countdown Timer - Prominent Alert */}
-        <motion.div
-          className={`w-full max-w-md p-6 rounded-2xl border-2 mb-8 ${
-            urgencyLevel === "critical"
-              ? "bg-red-50 border-red-500 dark:bg-red-950/20 dark:border-red-500"
-              : urgencyLevel === "warning"
-                ? "bg-yellow-50 border-yellow-500 dark:bg-yellow-950/20 dark:border-yellow-500"
-                : "bg-green-50 border-green-500 dark:bg-green-950/20 dark:border-green-500"
-          }`}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1.4 }}
-        >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            {urgencyLevel === "critical" ? (
-              <AlertTriangle className="h-6 w-6 text-red-500" />
-            ) : (
-              <Clock className="h-6 w-6 text-green-500" />
-            )}
-            <h2 className="text-lg font-bold text-black dark:text-white">
-              {urgencyLevel === "critical" ? "URGENT: Download Now!" : "Download Time Remaining"}
-            </h2>
-          </div>
-
+        {/* Order summary - physical products list only */}
+        {orderItems.length > 0 && (
           <motion.div
-            className={`text-4xl font-mono font-bold mb-3 ${
-              urgencyLevel === "critical"
-                ? "text-red-600 dark:text-red-400"
-                : urgencyLevel === "warning"
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-green-600 dark:text-green-400"
-            }`}
-            animate={urgencyLevel === "critical" ? { scale: [1, 1.05, 1] } : {}}
-            transition={urgencyLevel === "critical" ? { duration: 1, repeat: Number.POSITIVE_INFINITY } : {}}
+            className="w-full max-w-md mb-8 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.6 }}
           >
-            {formatTime(timeLeft)}
+            <div className="flex items-center gap-2 mb-4">
+              <Package className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-lg font-semibold text-black dark:text-white">Order summary</h2>
+            </div>
+            <ul className="space-y-2 text-left">
+              {orderItems.map((item, index) => (
+                <motion.li
+                  key={item.id}
+                  className="text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.7 + index * 0.05 }}
+                >
+                  <span className="text-gray-400">•</span>
+                  {item.productName}
+                </motion.li>
+              ))}
+            </ul>
           </motion.div>
+        )}
 
-          <p
-            className={`text-sm font-medium ${
-              urgencyLevel === "critical"
-                ? "text-red-700 dark:text-red-300"
-                : urgencyLevel === "warning"
-                  ? "text-yellow-700 dark:text-yellow-300"
-                  : "text-green-700 dark:text-green-300"
-            }`}
-          >
-            {timeLeft === 0 ? "Download time has expired" : "You have 30 minutes to download your files"}
-          </p>
-
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-4">
-            <motion.div
-              className={`h-2 rounded-full ${
-                urgencyLevel === "critical"
-                  ? "bg-red-500"
-                  : urgencyLevel === "warning"
-                    ? "bg-yellow-500"
-                    : "bg-green-500"
-              }`}
-              initial={{ width: "100%" }}
-              animate={{ width: `${(timeLeft / (30 * 60)) * 100}%` }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-        </motion.div>
-
-        {/* Order Items */}
+        {/* Continue shopping */}
         <motion.div
-          className="w-full space-y-4 mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.3 }} 
-        >
-          {orderItems?.map((item, index) => (
-            <motion.div
-              key={item.id}
-              className="bg-white dark:bg-gray-900 p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col sm:flex-row items-center justify-between gap-6"
-              initial={{ x: 50, opacity: 0, scale: 0.98 }}
-              animate={{ x: 0, opacity: 1, scale: 1 }}
-              transition={{
-                delay: 0.4 + index * 0.1, 
-                duration: 0.4,
-                ease: "easeOut",
-              }}
-              whileHover={{ y: -2 }}
-            >
-              <div className="text-left flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Download className="h-5 w-5 text-green-500" />
-                  <p className="font-semibold text-lg text-black dark:text-white">{item.productName}</p>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {timeLeft === 0 ? "Download expired" : "Click below to download immediately"}
-                </p>
-              </div>
-              <div className="shrink-0">
-                <DownloadButton storeId={item.storeId} productId={item.productId} />
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-
-        {/* Action Button */}
-        <motion.div
-          className="flex flex-col sm:flex-row gap-4 w-full max-w-md"
+          className="w-full max-w-md"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2.2 }}
+          transition={{ delay: 2 }}
         >
-          <motion.div className="w-full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button className="w-full h-12 text-lg font-semibold bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black border-2 border-black dark:border-white transition-all duration-300">
-              <Link href="/" className="flex items-center justify-center gap-2">
-                Continue Shopping
-                <motion.div
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Number.POSITIVE_INFINITY,
-                    repeatType: "reverse",
-                  }}
-                >
-                  →
-                </motion.div>
-              </Link>
-            </Button>
-          </motion.div>
+          <Button className="w-full h-12 text-lg font-semibold bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black border-2 border-black dark:border-white transition-all duration-300">
+            <Link href="/" className="flex items-center justify-center gap-2">
+              Continue Shopping
+              <motion.div
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, repeatType: "reverse" }}
+              >
+                →
+              </motion.div>
+            </Link>
+          </Button>
         </motion.div>
 
-        {/* Footer Message */}
-        <motion.div
-          className="mt-12 text-gray-600 dark:text-gray-400"
+        {/* Footer */}
+        <motion.p
+          className="mt-10 text-gray-500 dark:text-gray-400 text-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2.4 }}
+          transition={{ delay: 2.2 }}
         >
-          <motion.p
-            className="text-lg font-medium"
-            animate={{ y: [0, -5, 0] }}
-            transition={{
-              repeat: Number.POSITIVE_INFINITY,
-              duration: 3,
-              repeatType: "reverse",
-              ease: "easeInOut",
-            }}
-          >
-            Thanks for shopping with us!
-          </motion.p>
-          <motion.p
-            className="text-sm mt-2 opacity-75"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.75 }}
-            transition={{ delay: 2.6 }}
-          >
-            {timeLeft === 0
-              ? "Contact support if you need to re-download your files"
-              : "Download your files before the timer expires"}
-          </motion.p>
-        </motion.div>
+          Thanks for shopping with Al-Baha store!
+        </motion.p>
       </div>
     </div>
   )
 }
-

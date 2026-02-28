@@ -152,9 +152,9 @@ export default function PrivacyPolicy() {
                   3. Payment Processing
                 </h2>
                 <p>
-                  All payment transactions are handled by third-party providers (such as Stripe) using secure
-                  encryption protocols. We do not store or have access to your full card details. Please review
-                  Stripe&apos;s own privacy policy for details on their data handling practices.
+                  All payment transactions are handled by our payment provider (HyperPay) using secure
+                  encryption protocols. We do not store or have access to your full card details. Card data is
+                  processed in a PCI DSS compliant manner by HyperPay.
                 </p>
 
                 <h2 id="sharing-information" className="text-2xl font-semibold mt-10 mb-4 scroll-mt-24">
@@ -199,8 +199,8 @@ export default function PrivacyPolicy() {
                 </ul>
                 <p>
                   To exercise these rights, contact us at:{" "}
-                  <a href="mailto:support@Brandex.com" className="text-primary hover:underline">
-                    support@Brandex.com
+                  <a href="mailto:support@al-baha-store.com" className="text-primary hover:underline">
+                    support@al-baha-store.com
                   </a>
                 </p>
 
@@ -227,13 +227,13 @@ export default function PrivacyPolicy() {
                 <div className="bg-muted p-4 rounded-lg my-4">
                   <p>
                     <strong>Email:</strong>{" "}
-                    <a href="mailto:support@Brandex.com" className="text-primary hover:underline">
-                      support@Brandex.com
+                    <a href="mailto:support@al-baha-store.com" className="text-primary hover:underline">
+                      support@al-baha-store.com
                     </a>
                     <br />
                     <strong>Phone:</strong> +962-79-297-7707
                     <br />
-                    <strong>Business Name:</strong> Brandex
+                    <strong>Business Name:</strong> Al-Baha store
                     <br />
                     <strong>Location:</strong> Amman, Jordan
                   </p>

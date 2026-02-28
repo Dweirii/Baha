@@ -1,6 +1,7 @@
-// app/(routes)/thank-you/page.tsx
 import { Suspense } from "react"
 import ThankYouClient from "./components/ThankYouClient"
+
+export const dynamic = "force-dynamic"
 
 export default function Page() {
   return (

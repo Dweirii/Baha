@@ -17,7 +17,7 @@ export const DownloadButton = ({ storeId, productId }: DownloadButtonProps) => {
   const handleDownload = async () => {
     setLoading(true);
     try {
-      const token = await getToken({ template: "CustomerJWTBrandex" });
+      const token = await getToken();
       if (!token) throw new Error("User not authenticated");
 
       const res = await fetch(`https://brandex-admin-main.vercel.app/api/${storeId}/products/${productId}/download`, {

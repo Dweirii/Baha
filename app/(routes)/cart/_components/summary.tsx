@@ -1,25 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShoppingBag, CreditCard, Heart } from "lucide-react";
+import { ShoppingBag, CreditCard, Heart, ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 
 import Button from "@/components/ui/Button";
 import Currency from "@/components/ui/currency";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import useCart from "@/hooks/use-cart";
+
+const COUNTRY_OPTIONS = [
+  { code: "JO", name: "Jordan" },
+  { code: "SA", name: "Saudi Arabia" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "EG", name: "Egypt" },
+  { code: "KW", name: "Kuwait" },
+  { code: "BH", name: "Bahrain" },
+  { code: "OM", name: "Oman" },
+  { code: "QA", name: "Qatar" },
+  { code: "US", name: "United States" },
+  { code: "GB", name: "United Kingdom" },
+];
 
 const Summary = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const items = useCart((state) => state.items);
   const removeAll = useCart((state) => state.removeAll);
-  const { getToken } = useAuth(); // ✅ Hook داخل الـ Component مباشرة
+  const { getToken } = useAuth();
+  const { user } = useUser();
 
+  const [showBilling, setShowBilling] = useState(false);
+  const [billing, setBilling] = useState({
+    email: "",
+    givenName: "",
+    surname: "",
+    street1: "",
+    city: "",
+    state: "",
+    country: "JO",
+    postcode: "",
+  });
+
+  useEffect(() => {
+    if (user) {
+      setBilling((prev) => ({
+        ...prev,
+        email: user.primaryEmailAddress?.emailAddress ?? prev.email,
+        givenName: user.firstName ?? prev.givenName,
+        surname: user.lastName ?? prev.surname,
+      }));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (searchParams.get("success")) {
@@ -33,19 +71,37 @@ const Summary = () => {
     }
   }, [searchParams, removeAll, router]);
 
-
   const totalPrice = items.reduce((total, item) => {
     return total + Number(item.price);
   }, 0);
 
-
   const onCheckout = async () => {
+    const { email, givenName, surname, street1, city, state, country, postcode } = billing;
+    if (!email?.trim() || !givenName?.trim() || !surname?.trim()) {
+      toast.error("Please enter your email and name.");
+      setShowBilling(true);
+      return;
+    }
+    if (!street1?.trim() || !city?.trim() || !country?.trim() || !postcode?.trim()) {
+      toast.error("Please complete billing address (street, city, country, postcode).");
+      setShowBilling(true);
+      return;
+    }
+
     try {
-      const token = await getToken({ template: "CustomerJWTBrandex" });
+      const token = await getToken();
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/checkout`,
         {
           productIds: items.map((item) => item.id),
+          customer: { email: email.trim(), givenName: givenName.trim(), surname: surname.trim() },
+          billing: {
+            street1: street1.trim(),
+            city: city.trim(),
+            state: (state ?? "").trim(),
+            country: country.trim(),
+            postcode: postcode.trim(),
+          },
         },
         {
           headers: {
@@ -54,8 +110,16 @@ const Summary = () => {
           },
         }
       );
-
-      window.location.href = response.data.url;
+      const { checkoutId, orderId, storeId, integrity, shopperResultUrl, widgetScriptUrl } = response.data;
+      if (!checkoutId || !orderId || !storeId) {
+        toast.error("Invalid checkout response.");
+        return;
+      }
+      sessionStorage.setItem("hyperpay_integrity", integrity || "");
+      sessionStorage.setItem("hyperpay_shopperResultUrl", shopperResultUrl || "");
+      sessionStorage.setItem("hyperpay_widgetScriptUrl", widgetScriptUrl || "");
+      const params = new URLSearchParams({ checkoutId, orderId, storeId });
+      router.push(`/checkout/pay?${params.toString()}`);
     } catch (err) {
       console.error("Checkout Error:", err);
       toast.error("Failed to initiate checkout.");
@@ -87,7 +151,7 @@ const Summary = () => {
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-1">
             <Heart className="h-4 w-4 text-white" fill="red" />
-            <span className="text-gray-600">Brandex</span>
+            <span className="text-gray-600">Al-Baha store</span>
           </div>
           <span className="font-medium text-gray-800">Thank you</span>
         </div>
@@ -98,6 +162,105 @@ const Summary = () => {
           <div className="text-base font-medium text-gray-900">Order Total</div>
           <Currency value={totalPrice} />
         </div>
+      </div>
+
+      {/* Billing details - mandatory for HyperPay live */}
+      <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowBilling(!showBilling)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 bg-gray-50 hover:bg-gray-100"
+        >
+          Billing & customer details
+          {showBilling ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {showBilling && (
+          <div className="p-4 space-y-3 bg-white border-t border-gray-200">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="billing-email">Email *</Label>
+                <Input
+                  id="billing-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={billing.email}
+                  onChange={(e) => setBilling((p) => ({ ...p, email: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="billing-givenName">First name *</Label>
+                <Input
+                  id="billing-givenName"
+                  placeholder="First name"
+                  value={billing.givenName}
+                  onChange={(e) => setBilling((p) => ({ ...p, givenName: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="billing-surname">Last name *</Label>
+              <Input
+                id="billing-surname"
+                placeholder="Last name"
+                value={billing.surname}
+                onChange={(e) => setBilling((p) => ({ ...p, surname: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="billing-street1">Street address *</Label>
+              <Input
+                id="billing-street1"
+                placeholder="Street address"
+                value={billing.street1}
+                onChange={(e) => setBilling((p) => ({ ...p, street1: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="billing-city">City *</Label>
+                <Input
+                  id="billing-city"
+                  placeholder="City"
+                  value={billing.city}
+                  onChange={(e) => setBilling((p) => ({ ...p, city: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="billing-state">State / Province</Label>
+                <Input
+                  id="billing-state"
+                  placeholder="State"
+                  value={billing.state}
+                  onChange={(e) => setBilling((p) => ({ ...p, state: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="billing-country">Country *</Label>
+                <select
+                  id="billing-country"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                  value={billing.country}
+                  onChange={(e) => setBilling((p) => ({ ...p, country: e.target.value }))}
+                >
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="billing-postcode">Postcode *</Label>
+                <Input
+                  id="billing-postcode"
+                  placeholder="Postcode"
+                  value={billing.postcode}
+                  onChange={(e) => setBilling((p) => ({ ...p, postcode: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 space-y-4">

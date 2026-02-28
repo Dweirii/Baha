@@ -8,7 +8,7 @@ export const useApiRequest = () => {
     let token = null;
 
     try {
-      token = await getToken({ template: "CustomerJWTBrandex" });    
+      token = await getToken();    
     } catch (err) {
       alert("Failed to get token: " + err);
       throw new Error("Authentication failed");

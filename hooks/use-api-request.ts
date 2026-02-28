@@ -9,7 +9,7 @@ export const useApiRequest = () => {
     let token: string | null = null;
 
     try {
-      token = await getToken({ template: "CustomerJWTBrandex" });
+      token = await getToken();
       if (!token) throw new Error("Missing token from Clerk");
     } catch (err: any) {
       console.error("Failed to get Clerk token:", err.message);

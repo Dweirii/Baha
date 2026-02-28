@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     }
 
     return {
-      title: `${product.name} | Store`,
+      title: `${product.name} | Al-Baha store`,
       openGraph: {
         images: product.images?.[0]?.url ? [{ url: product.images[0].url }] : [],
       },

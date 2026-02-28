@@ -19,7 +19,7 @@ const Footer = () => {
           <div>
             <h3 className="text-sm font-medium mb-3">About Us</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Brandex offers quality Mock-ups with exceptional customer service, dedicated to bringing you the best
+              Al-Baha store offers quality Mock-ups with exceptional customer service, dedicated to bringing you the best
               shopping experience.
             </p>
           </div>
@@ -49,11 +49,11 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:support@Brandex.com"
+                  href="mailto:support@al-baha-store.com"
                   className="text-xs text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2"
                 >
                   <Mail className="h-3 w-3" />
-                  support@Brandex.com
+                  support@al-baha-store.com
                 </a>
               </li>
               <li>
@@ -77,7 +77,7 @@ const Footer = () => {
               title: "About Us",
               content: (
                 <p className="text-xs text-gray-500">
-                  Brandex offers quality Mock-ups with exceptional customer service, dedicated to bringing you the
+                  Al-Baha store offers quality Mock-ups with exceptional customer service, dedicated to bringing you the
                   best shopping experience.
                 </p>
               ),
@@ -112,11 +112,11 @@ const Footer = () => {
                 <ul className="space-y-2">
                   <li>
                     <a
-                      href="mailto:support@Brandex.com"
+                      href="mailto:support@al-baha-store.com"
                       className="text-xs text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2"
                     >
                       <Mail className="h-3 w-3" />
-                      support@Brandex.com
+                      support@al-baha-store.com
                     </a>
                   </li>
                   <li>
@@ -154,7 +154,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-6 pt-4 border-t border-gray-100">
           <p className="text-center text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} <span className="font-medium">Brandex</span> • All Rights Reserved
+            &copy; {new Date().getFullYear()} <span className="font-medium">Al-Baha store</span> • All Rights Reserved
           </p>
         </div>
       </div>

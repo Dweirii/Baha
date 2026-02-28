@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Billboard as BillboardType } from "@/types";
 
 interface BillboardProps {
-  data: BillboardType;
+  data: BillboardType | null | undefined;
 }
 
 const Billboard: React.FC<BillboardProps> = ({
